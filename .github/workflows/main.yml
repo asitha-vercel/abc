@@ -1,26 +1,48 @@
-name: Auto Restart Vercel Every 43 Minutes
+name: Infinite Restart Loop
 
 on:
-  schedule:
-    - cron: "*/43 * * * *"
   workflow_dispatch:
 
 jobs:
-  restart:
+  restart-loop:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Update Restart File
+      - name: Loop + Self Restart
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Restart: $(date +%s)" > restart.txt
+          git config --global user.name "loop-bot"
+          git config --global user.email "loop@bot.com"
 
-      - name: Commit Changes
-        run: |
-          git config --global user.name "vercel-bot"
-          git config --global user.email "bot@vercel.com"
-          git add restart.txt
-          git commit -m "Auto restart $(date)" || echo "No changes"
-          git push
+          start=$(date +%s)
+
+          while true
+          do
+            now=$(date +%s)
+            diff=$((now - start))
+
+            # 5h 50min = 21000 sec (6h limit avoid කරන්න)
+            if [ $diff -gt 21000 ]; then
+              echo "Restarting workflow..."
+
+              curl -X POST \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                https://api.github.com/repos/${{ github.repository }}/actions/workflows/loop.yml/dispatches \
+                -d '{"ref":"main"}'
+
+              exit 0
+            fi
+
+            echo $(date +%s) > restart.txt
+
+            git add restart.txt
+            git commit -m "Auto restart $(date)" || echo "No changes"
+            git push
+
+            sleep 2580
+          done
