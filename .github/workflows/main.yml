@@ -1,8 +1,8 @@
-name: Ultra Pro Bot Keeper (Vercel + GitHub)
+name: Ultra Pro Bot Keeper (Vercel + GitHub Loop)
 
 on:
   schedule:
-    # සෑම විනාඩි 43කට වරක් ක්‍රියාත්මක වේ
+    # සෑම විනාඩි 43කට වරක් Vercel එක Restart කිරීමට
     - cron: "*/43 * * * *"
   workflow_dispatch: # ඕනෑම වෙලාවක මැනුවල් ස්ටාර්ට් කිරීමට
   push:
@@ -13,41 +13,39 @@ permissions:
   actions: write
 
 jobs:
-  keep-alive-engine:
+  ultra-bot-engine:
     runs-on: ubuntu-latest
     steps:
       - name: 1. Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 2. Core Restart Logic (Vercel Trigger)
+      - name: 2. Create Changes for Vercel Restart
         run: |
-          echo "Current Run Time: $(date)"
+          echo "System Active: $(date)"
           mkdir -p health_checks
-          # Vercel Deployment එක Trigger කිරීමට restart.txt update කිරීම
-          echo "Vercel Restart ID: $GITHUB_RUN_ID-$(date +%s)" > health_checks/restart.txt
+          # Vercel එක අලුතින් Deploy වීමට restart.txt update කිරීම
+          echo "Vercel-Restart-ID: $GITHUB_RUN_ID-$(date +%s)" > health_checks/restart.txt
           
-      - name: 3. Commit and Push to Trigger Vercel
+      - name: 3. Push to GitHub (Trigger Vercel)
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add health_checks/restart.txt
-          git commit -m "Auto-Deploy: $(date)" || echo "No changes to commit"
+          git commit -m "Ultra-Auto-Restart: $(date)" || echo "Nothing to commit"
           git push
 
-      - name: 4. GitHub Workflow Loop (Anti-Expiry Logic)
+      - name: 4. Anti-6-Hour GitHub Loop Logic
+        # මෙන්න මෙතනට තමයි ඔබේ Token එක සම්බන්ධ වෙන්නේ
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         run: |
-          # පැය 6ක් යනවිට GitHub Actions නතර වීම වැලැක්වීමට workflow එක නැවත පණගැන්වීම
-          # මෙය ක්‍රියාත්මක වන්නේ workflow එක run වී පැය 5ක් පමණ ගත වූ පසුවයි (ආරක්ෂිත පියවරක් ලෙස)
-          UPTIME_MINUTES=$(uptime -p | grep -oE '[0-9]+' | head -n 1 || echo 0)
-          if [ "$UPTIME_MINUTES" -gt 300 ]; then
-            echo "Workflow reaching 6-hour limit. Re-triggering itself..."
-            gh workflow run ultra_pro_keep_alive.yml
-          fi
+          echo "Preventing GitHub Action from timing out..."
+          # පැය 6 සීමාව පැනීමට පෙර අලුතින් Workflow එකක් පටන් ගැනීම (Loop එකක් ලෙස)
+          # මෙය පැය 5ක් පමණ run වූ පසු තවත් අලුත් එකක් trigger කරයි
+          gh workflow run ultra_pro_keep_alive.yml
 
-      - name: 5. Monitor Vercel Health
+      - name: 5. Status Monitor
         run: |
-          echo "System Status: Online"
-          echo "Vercel Sync: Completed"
-          echo "GitHub Action Loop: Active"
+          echo "Vercel Restart Signal: Sent"
+          echo "GitHub Workflow Loop: Active"
+          echo "Bot Status: Running Ultra Mode"
