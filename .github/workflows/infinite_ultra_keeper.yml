@@ -2,7 +2,7 @@ name: INFINITE-ULTRA-KEEPER-PRO
 
 on:
   schedule:
-    - cron: "*/44 * * * *" # විනාඩි 44න් 44ට Vercel Restart එකට
+    - cron: "*/44 * * * *"
   workflow_dispatch: 
   push:
     branches: [ main ]
@@ -22,41 +22,46 @@ jobs:
 
       - name: 🛠️ 2. Manage Status Folders
         run: |
-          # ෆෝල්ඩර් දෙකම නිර්මාණය කිරීම
+          # Folder දෙකම හදලා ඒවට dummy files දානවා Git එකට අහුවෙන්න
           mkdir -p vercel_status
           mkdir -p github_status
           
-          # Vercel Restart Log එක (සෑම විනාඩි 44කටම)
+          # Vercel එක Restart වෙන්න කරන Update එක
           echo "Vercel Cycle: $(date)" > vercel_status/last_restart.txt
           echo "Salt: $RANDOM" >> vercel_status/last_restart.txt
+          
+          # GitHub status එකට නිකන් file එකක් හදනවා error එක එන එක නතර කරන්න
+          if [ ! -f github_status/restart_log.txt ]; then
+            echo "Init" > github_status/restart_log.txt
+          fi
 
       - name: 🔄 3. Anti-6-Hour GitHub Loop Logic
         env:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         run: |
-          # මෙහිදී GitHub Action එක පැය 6 සම්පූර්ණ වීමට පෙර (පැය 5 විනාඩි 50දී) 
-          # අලුත්ම Action Run එකක් ආරම්භ කරයි (Infinite Loop).
           UPTIME_SEC=$(awk '{print $1}' /proc/uptime | cut -d. -f1)
           
-          if [ "$UPTIME_SEC" -gt 21000 ]; then # තත්පර 21000 = පැය 5 මිනිත්තු 50
+          # පැය 5 විනාඩි 45 පිරුණම අලුත් Run එකක් Trigger කරනවා
+          if [ "$UPTIME_SEC" -gt 20700 ]; then
             echo "GitHub 6-Hour Limit Approaching. Triggering Next Run..."
             echo "GitHub Re-Triggered At: $(date)" > github_status/restart_log.txt
             gh workflow run infinite_ultra_keeper.yml
-          else
-            echo "GitHub Session is stable."
           fi
 
       - name: ⬆️ 4. Push Updates to Repository
         run: |
           git config --global user.name "thanuh-ultra-bot"
           git config --global user.email "bot@ultra-sync.com"
-          # වැදගත්: ෆෝල්ඩර් දෙකම add කර ඇති බව සහතික කිරීම
-          git add vercel_status/last_restart.txt github_status/restart_log.txt
-          git commit -m "🚀 Power-Sync: $(date +'%H:%M') [skip ci]" || echo "No changes"
+          
+          # මෙතන තමයි වැදගත්ම දේ: තියෙන file විතරක් add කරගන්නවා
+          git add vercel_status/last_restart.txt
+          git add github_status/restart_log.txt
+          
+          git commit -m "🚀 Power-Sync: $(date +'%H:%M') [skip ci]" || echo "No changes to commit"
           git push
 
       - name: 🌐 5. Vercel Wake-up Call
         run: |
-          # මෙතනට ඔබේ නිවැරදි Vercel URL එක ඇතුළත් කරන්න
+          # ඔබේ URL එක මෙතනට දාන්න
           curl -Is https://abc-one-rust.vercel.app/ | head -n 1
           echo "Vercel Pinged Successfully!"
