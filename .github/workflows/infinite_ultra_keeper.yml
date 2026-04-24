@@ -2,7 +2,7 @@ name: INFINITE-ULTRA-KEEPER-PRO
 
 on:
   schedule:
-    - cron: "*/44 * * * *"
+    - cron: "*/44 * * * *" # විනාඩි 44න් 44ට Vercel Restart එකට
   workflow_dispatch: 
   push:
     branches: [ main ]
@@ -14,10 +14,7 @@ permissions:
 jobs:
   loop-engine:
     runs-on: ubuntu-latest
-    concurrency:
-      group: bot-infinite-loop
-      cancel-in-progress: true
-
+    # concurrency කොටස ඉවත් කර ඇත (එවිට එක දිගට Cancel වෙන්නේ නැත)
     steps:
       - name: 🚀 1. Ultra Fast Checkout
         uses: actions/checkout@v4
@@ -28,14 +25,18 @@ jobs:
         run: |
           mkdir -p vercel_status
           mkdir -p github_status
+          
+          # Vercel Restart Log එක update කිරීම
           echo "Vercel Cycle: $(date)" > vercel_status/last_restart.txt
           echo "Salt: $RANDOM" >> vercel_status/last_restart.txt
 
       - name: 🔄 3. Anti-6-Hour GitHub Persistence Logic
         run: |
+          # මෙහිදී කරන්නේ පැය 6 සීමාවට ආසන්න වන විට පමණක් ලොගය update කිරීමයි
           UPTIME_SEC=$(awk '{print $1}' /proc/uptime | cut -d. -f1)
+          
           if [ "$UPTIME_SEC" -gt 20700 ]; then
-            echo "GitHub 6-Hour Limit Approaching..."
+            echo "GitHub 6-Hour Limit Approaching. Logging..."
             echo "GitHub Re-Triggered At: $(date)" > github_status/restart_log.txt
           fi
 
@@ -44,18 +45,17 @@ jobs:
           git config --global user.name "thanuh-ultra-bot"
           git config --global user.email "bot@ultra-sync.com"
           git add vercel_status/last_restart.txt github_status/restart_log.txt || echo "No changes"
-          git commit -m "🚀 Sync Cycle: $(date +'%H:%M') [skip ci]" || exit 0
+          git commit -m "🚀 Power-Sync: $(date +'%H:%M') [skip ci]" || exit 0
           git push
 
-      - name: ⚡ 5. Self-Trigger Infinite Loop
+      - name: ⚡ 5. Self-Trigger (Only when needed)
         env:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         run: |
-          echo "Handing over to the next cycle..."
-          # මෙතන තියෙන නම ඔබේ file එකේ නමට (infinite_ultra_keeper.yml) සමාන විය යුතුයි
-          gh workflow run infinite_ultra_keeper.yml
+          # හැම තත්පරේම අලුත් ඒවා හදන්නේ නැතුව, විනාඩි 44න් 44ට පමණක් ක්‍රියාත්මක වේ
+          echo "Sync cycle completed successfully."
 
       - name: 🌐 6. Vercel Wake-up Call
         run: |
-          curl -Is https://abc-one-rust.vercel.app/ | head -n 1
+          curl -Is https://abc-mu-ten.vercel.app/ | head -n 1
           echo "Vercel Pinged Successfully!"
