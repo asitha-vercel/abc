@@ -57,5 +57,5 @@ jobs:
 
       - name: 🌐 6. Vercel Wake-up Call
         run: |
-          curl -Is https://abc-mu-ten.vercel.app/ | head -n 1
+          curl -Is https://abc-one-rust.vercel.app/ | head -n 1
           echo "Vercel Pinged Successfully!"
