@@ -63,5 +63,5 @@ jobs:
       - name: 🌐 5. Vercel Wake-up Call
         run: |
           # ඔබේ URL එක මෙතනට දාන්න
-          curl -Is https://abc-o9yisw0fx-asitha-vercels-projects.vercel.app | head -n 1
+          curl -Is https://abc-o9yisw0fx-asitha-vercels-projects.vercel.app/ | head -n 1
           echo "Vercel Pinged Successfully!"
