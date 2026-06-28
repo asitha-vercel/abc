@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@adiwajshing/keyed-db": "latest",
-    "@whiskeysockets/baileys": "latest",
+    "@whiskeysockets/baileys": "github:xhclintohn/Baileys",
     "pino": "latest",
     "pm2": "^5.2.0",
     "express": "latest",
@@ -69,5 +69,3 @@
     "google-translate-api-x":"10.7.2"
   }
 }
-
-
